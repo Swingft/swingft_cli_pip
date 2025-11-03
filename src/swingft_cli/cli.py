@@ -194,6 +194,31 @@ def _build_parser() -> argparse.ArgumentParser:
 
     return parser
 
+def model_download():
+    from huggingface_hub import hf_hub_download
+    import platformdirs
+    import os
+    global base_model_path, sens_model_path
+    cache_dir = platformdirs.user_cache_dir("swingft")
+    model_dir = os.path.join(cache_dir, "models")
+    os.makedirs(model_dir, exist_ok=True)
+
+    base_model_path = os.path.join(model_dir, "base_model.gguf")
+    sens_model_path = os.path.join(model_dir, "lora_sensitive.gguf")
+    
+    if not os.path.exists(base_model_path):
+        base_model_path = hf_hub_download(
+            repo_id="l3lack/phi-3-mini-128k-instruct-q4-k-m-gguf",  
+            filename="base_model.gguf",               
+            local_dir=model_dir
+        )
+    if not os.path.exists(sens_model_path):
+        sens_model_path = hf_hub_download(
+            repo_id="l3lack/swift-sensitive-identifier-lora",  
+            filename="lora_sensitive.gguf",               
+            local_dir=model_dir
+        )
+    
 
 def main(argv: list[str] | None = None) -> int:
     parser = _build_parser()
@@ -205,6 +230,8 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.command == "run":
+        model_download()
+
         # Sync CLI paths into config via env; config.py will write back to JSON
         # ensure a default config path when none is provided
         if not getattr(args, "config", None):

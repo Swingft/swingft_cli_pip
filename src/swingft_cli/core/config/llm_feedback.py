@@ -283,27 +283,33 @@ _ANALYZER_PATH_CACHE = None
 
 
 def _load_llm_singleton():
+    from swingft_cli.cli import base_model_path, sens_model_path 
+
     global _LLM_SINGLETON
     if _LLM_SINGLETON is not None:
         return _LLM_SINGLETON
+
     try:
-        # llama.cpp 로그 소음을 줄이기 위해 기본 로그 레벨을 오류로 설정
+        # llama.cpp 로그 레벨 최소화
         import os as _os
         if not _os.environ.get("LLAMA_LOG_LEVEL"):
-            # ERROR 레벨로 설정 (낮을수록 출력 감소)
             _os.environ["LLAMA_LOG_LEVEL"] = "40"
-        # Metal 초기화 등에서 찍히는 stderr 로그를 최대한 억제하기 위해 import 이후에도 제어
+
         from llama_cpp import Llama  # type: ignore
         _trace("llama_cpp import 성공")
     except ImportError as e:
         _trace("llama_cpp import 실패: %s", e)
         _maybe_raise(e)
         return None
-    base_model = _os.getenv("BASE_MODEL_PATH", "./models/base_model.gguf")
-    lora_path = _os.getenv("LORA_PATH", _os.path.join("./models", "lora_sensitive_single.gguf"))
-    n_ctx = int(_os.getenv("N_CTX", "8192"))
-    n_threads = int(_os.getenv("N_THREADS", str(os.cpu_count() or 8)))
-    n_gpu_layers = int(_os.getenv("N_GPU_LAYERS", "12"))
+
+    base_model = base_model_path
+    lora_path = sens_model_path
+
+    import os
+    n_ctx = int(os.getenv("N_CTX", "8192"))
+    n_threads = int(os.getenv("N_THREADS", str(os.cpu_count() or 8)))
+    n_gpu_layers = int(os.getenv("N_GPU_LAYERS", "12"))
+
     kwargs = dict(
         model_path=base_model,
         n_ctx=n_ctx,
@@ -315,24 +321,21 @@ def _load_llm_singleton():
         kwargs["lora_path"] = lora_path
     if n_gpu_layers:
         kwargs["n_gpu_layers"] = n_gpu_layers
+
     try:
         _trace("LLM 모델 로드 시도: %s", base_model)
-        # 모델 로드 시 발생하는 Metal 초기화 stderr 로그를 억제
         import contextlib as _ct
         import sys as _sys
-        try:
-            with open(_os.devnull, 'w') as _devnull, _ct.redirect_stderr(_devnull):
-                _LLM_SINGLETON = Llama(**kwargs)
-        except (OSError, RuntimeError, ValueError) as e:
-            _trace("LLM model load with stderr redirect failed, retrying without redirect: %s", e)
-            # 일부 환경에서는 redirect가 적용되지 않을 수 있으므로 재시도
+        with open(os.devnull, 'w') as _devnull, _ct.redirect_stderr(_devnull):
             _LLM_SINGLETON = Llama(**kwargs)
         _trace("LLM 모델 로드 성공")
-    except (RuntimeError, OSError, ValueError) as e:
+    except (OSError, RuntimeError, ValueError) as e:
         _trace("LLM 모델 로드 실패: %s", e)
         _maybe_raise(e)
         _LLM_SINGLETON = None
+
     return _LLM_SINGLETON
+
 
 
 def run_local_llm_exclude(identifier: str, swift_code: str, ast_symbols) -> list | None:

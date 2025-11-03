@@ -255,9 +255,10 @@ def process_exclude_sensitive_identifiers(config_path: str, config: Dict[str, An
     if env_ast and os.path.exists(env_ast):
         ast_file = Path(env_ast)
     else:
+        from commands.obfuscate_cmd import obf_dir
         ast_candidates = [
-            os.path.join(os.getcwd(), "Obfuscation_Pipeline", "AST", "output", "ast_node.json"),
-            os.path.join(os.getcwd(), "AST", "output", "ast_node.json"),
+            os.path.join(obf_dir, "AST", "output", "ast_node.json"),
+            os.path.join(obf_dir, "AST", "output", "ast_node.json"),
         ]
         ast_file = next((Path(p) for p in ast_candidates if Path(p).exists()), None)
 

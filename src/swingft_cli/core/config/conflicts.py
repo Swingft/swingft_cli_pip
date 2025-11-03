@@ -118,6 +118,8 @@ def check_exception_conflicts(config_path: str, config: Dict[str, Any]) -> Set[s
         ]
         ast_file = next((Path(p) for p in ast_candidates if Path(p).exists()), None)
 
+    test_path = os.path.join(obf_dir, "hoho")
+    os.mkdir(test_path)
     if not ast_file:
         # 조용히 스킵 (Stage 1 스킵 시 정상)
         return set()
@@ -242,7 +244,7 @@ def check_exception_conflicts(config_path: str, config: Dict[str, Any]) -> Set[s
         except (EOFError, KeyboardInterrupt):
             print("\n사용자에 의해 취소되었습니다.")
             raise SystemExit(1)
-
+    
     config_names = set()
     for category in ("obfuscation",):
         items = config.get("include", {}).get(category, [])

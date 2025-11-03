@@ -6,6 +6,7 @@ import time
 import threading
 import queue
 from collections import deque
+import swingft_cli
 from .tui import get_tui, _maybe_raise, _trace
 
 # TUI 인스턴스 가져오기
@@ -23,7 +24,8 @@ def _init_find_project():
         return _find_xcode_project_func
     
     try:
-        pipeline_dir = os.path.join(os.getcwd(), "Obfuscation_Pipeline")
+        pkg_root = os.path.dirname(swingft_cli.__file__)
+        pipeline_dir = os.path.join(pkg_root, "Obfuscation_Pipeline")
         find_project_path = os.path.join(pipeline_dir, "find_project.py")
         if os.path.exists(find_project_path):
             # sys.path에 추가하지 않고 직접 import
@@ -179,8 +181,8 @@ def run_build_script_after_obfuscation(obf_project_dir: str) -> None:
         #print(f"\n[INFO] Xcode 프로젝트 발견: {xcode_project_path}")
         
         # BuildScript 디렉토리 경로 찾기
-        workspace_root = os.getcwd()
-        build_script_dir = os.path.join(workspace_root, "BuildScript")
+        pkg_root = os.path.dirname(swingft_cli.__file__)
+        build_script_dir = os.path.join(pkg_root, "BuildScript")
         build_script_main = os.path.join(build_script_dir, "main.py")
         
         if not os.path.exists(build_script_main):

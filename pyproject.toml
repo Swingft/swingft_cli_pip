@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "swingft-test-v3"
-version = "1.0.7"
+version = "1.0.9"
 description = "Swingft CLI tool"
 requires-python = ">=3.8"
 dependencies = [
@@ -23,4 +23,4 @@ swingft = "swingft_cli.cli:main"
 where = ["src", "."]
 
 [tool.setuptools.package-data]
-"swingft_cli.Obfuscation_Pipeline" = ["**/*"]
+"swingft_cli" = ["**/*"]

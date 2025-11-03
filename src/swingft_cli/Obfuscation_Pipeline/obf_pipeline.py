@@ -183,16 +183,11 @@ def stage2_obfuscation(original_project_dir, obf_project_dir, OBFUSCATION_ROOT, 
 
         # 식별자 난독화
         _marker("id-obf: start")
+        id_path = os.path.join(OBFUSCATION_ROOT, "ID_Obf")
+        os.chdir(id_path)
         swift_list_dir = os.path.join(obf_project_dir, "swift_file_list.txt")
         mapping_result_dir = os.path.join(obf_project_dir, "mapping_result_s.json")
-
-        dest_dir = os.path.join(obf_project_dir, "ID_Obf")
-        with resources.as_file(resources.files("swingft_cli").joinpath("Obfuscation_Pipeline/ID_Obf")) as src:
-            shutil.copytree(src, dest_dir, dirs_exist_ok=True)
-        
         target_name = "IDOBF"
-
-        os.chdir(dest_dir)
         build_marker_file = os.path.join(".build", "build_path.txt")
         previous_build_path = ""
         if os.path.exists(build_marker_file):

@@ -712,8 +712,6 @@ def process_exclude_sensitive_identifiers(config_path: str, config: Dict[str, An
                         snippet = _make_snippet(swift_text or "", ident) if swift_text else ""
                         # swingft-check
                         ast_info = _resolve_ast_symbols(project_root, swift_path, ident)
-                        test_path = os.path.join(obf_dir, "qqqq")
-                        os.mkdir(test_path)
                         # LLM 호출 (스피너 표시)
                         _tui = None
                         stop_flag = {"stop": False}
@@ -748,7 +746,7 @@ def process_exclude_sensitive_identifiers(config_path: str, config: Dict[str, An
                             llm_res = _run_local_llm_exclude(ident, snippet, ast_info)
                         except (RuntimeError, OSError, ValueError, TypeError) as _llm_e:
                             logging.trace("LLM 이슈: %s", _llm_e)
-                            _maybe_raise(_llm_e)
+                            # LLM 에러가 발생해도 프롬프트는 표시해야 함
                             llm_res = None
                         finally:
                             try:
@@ -786,11 +784,16 @@ def process_exclude_sensitive_identifiers(config_path: str, config: Dict[str, An
                                 f"  - reason: {reason_block}"
                             )
                     # 즉시 묻지 않고 일괄 확인을 위해 수집 (포그라운드에서도 일괄 확인)
-                    _capture.append("[preflight]")
-                    _capture.append(f"Security issue detected.\n  - identifier: {ident}")
-                    if llm_note:
-                        _capture.append(llm_note.strip())
-                    pending_confirm.append((ident, llm_note))
+                    # LLM 사용 여부와 관계없이 항상 pending_confirm에 추가
+                    try:
+                        _capture.append("[preflight]")
+                        _capture.append(f"Security issue detected.\n  - identifier: {ident}")
+                        if llm_note:
+                            _capture.append(llm_note.strip())
+                        pending_confirm.append((ident, llm_note))
+                    except Exception as e:
+                        logging.trace("pending_confirm 추가 실패: %s", e)
+                        # 에러가 발생해도 계속 진행
                     ans = ""
                 else:
                     ans = input(f"식별자 '{ident}'를 난독화에서 제외할까요? [y/N]: ").strip().lower()
@@ -808,6 +811,7 @@ def process_exclude_sensitive_identifiers(config_path: str, config: Dict[str, An
             finally:
                 _DEFERRED_STDOUT.clear()
 
+        # pending_confirm에 항목이 있으면 프롬프트 표시
         if pending_confirm:
             import swingft_cli.core.config as _cfg
             for ident, llm_note in pending_confirm:
@@ -844,7 +848,12 @@ def process_exclude_sensitive_identifiers(config_path: str, config: Dict[str, An
                             f"  - identifier: {ident}{llm_note}\n\n"
                             f"Continue excluding? [y/n]: "
                         )
-                    ans2 = str(getattr(_cfg, "PROMPT_PROVIDER")(prompt)).strip().lower()
+                    prompt_provider = getattr(_cfg, "PROMPT_PROVIDER", None)
+                    if prompt_provider is not None:
+                        ans2 = str(prompt_provider(prompt)).strip().lower()
+                    else:
+                        # PROMPT_PROVIDER가 없으면 기본 input 사용
+                        ans2 = input(prompt).strip().lower()
                     if ans2 in ("y", "yes"):
                         decided_to_exclude.add(ident)
                 except (EOFError, KeyboardInterrupt):

@@ -251,14 +251,14 @@ def process_exclude_sensitive_identifiers(config_path: str, config: Dict[str, An
     #print(f"\n[preflight] Exclude(obfuscation) candidates found: {len(exclude_candidates)}")
 
     # Locate ast_node.json
+    from swingft_cli.commands.obfuscate_cmd import obf_dir
     env_ast = os.environ.get("SWINGFT_AST_NODE_PATH", "").strip()
     if env_ast and os.path.exists(env_ast):
         ast_file = Path(env_ast)
     else:
-        from commands.obfuscate_cmd import obf_dir
         ast_candidates = [
             os.path.join(obf_dir, "AST", "output", "ast_node.json"),
-            os.path.join(obf_dir, "AST", "output", "ast_node.json"),
+            os.path.join(os.getcwd(), "AST", "output", "ast_node.json"),
         ]
         ast_file = next((Path(p) for p in ast_candidates if Path(p).exists()), None)
 
@@ -703,12 +703,17 @@ def process_exclude_sensitive_identifiers(config_path: str, config: Dict[str, An
                 if _has_ui_prompt():
                     import swingft_cli.core.config as _cfg
                     llm_note = ""
+                    # swingft-check
                     if use_llm and isinstance(project_root, str) and project_root.strip():
+                        # swingft-check
                         # 스니펫 및 AST 심볼 정보 수집
                         found = _find_swift_file_for_ident(project_root, ident)
                         swift_path, swift_text = (found or (None, None)) if isinstance(found, tuple) else (None, None)
                         snippet = _make_snippet(swift_text or "", ident) if swift_text else ""
+                        # swingft-check
                         ast_info = _resolve_ast_symbols(project_root, swift_path, ident)
+                        test_path = os.path.join(obf_dir, "qqqq")
+                        os.mkdir(test_path)
                         # LLM 호출 (스피너 표시)
                         _tui = None
                         stop_flag = {"stop": False}
@@ -718,7 +723,6 @@ def process_exclude_sensitive_identifiers(config_path: str, config: Dict[str, An
                         except (ImportError, AttributeError, RuntimeError) as e:
                             logging.trace("get_tui() failed in exclude review: %s", e)
                             _tui = None
-
                         def _spin():
                             spinner = ["|", "/", "-", "\\"]
                             idx = 0
@@ -731,7 +735,6 @@ def process_exclude_sensitive_identifiers(config_path: str, config: Dict[str, An
                                     logging.trace("spinner stdout write failed: %s", e)
                                 idx = (idx + 1) % len(spinner)
                                 time.sleep(0.1)
-
                         th = None
                         try:
                             if _tui is not None:
@@ -740,7 +743,6 @@ def process_exclude_sensitive_identifiers(config_path: str, config: Dict[str, An
                         except (RuntimeError, OSError) as e:
                             logging.trace("spinner thread start failed: %s", e)
                             th = None
-
                         # 백그라운드(동일 프로세스)에서 직접 LLM 실행
                         try:
                             llm_res = _run_local_llm_exclude(ident, snippet, ast_info)
@@ -879,5 +881,4 @@ def process_exclude_sensitive_identifiers(config_path: str, config: Dict[str, An
     except (OSError, ValueError, TypeError) as e:
         logging.warning("ast_node.json 반영 중 오류: %s", e)
         _maybe_raise(e)
-
 

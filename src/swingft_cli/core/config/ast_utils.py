@@ -58,10 +58,11 @@ def compare_exclusion_list_vs_ast(analyzer_root: str, ast_file_path: str | None)
 
     # autodetect AST if not given
     ast_path_eff = ast_file_path
+    from swingft_cli.commands.obfuscate_cmd import obf_dir
     if not ast_path_eff or not os.path.isfile(ast_path_eff):
         candidates = [
-            os.path.join(os.getcwd(), "Obfuscation_Pipeline", "AST", "output", "ast_node.json"),
-            os.path.join(os.getcwd(), "AST", "output", "ast_node.json"),
+            os.path.join(obf_dir, "AST", "output", "ast_node.json"),
+            os.path.join(obf_dir, "AST", "output", "ast_node.json"),
         ]
         ast_path_eff = next((p for p in candidates if os.path.isfile(p)), None)
     result["ast_path"] = ast_path_eff

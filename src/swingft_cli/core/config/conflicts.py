@@ -8,7 +8,6 @@ from typing import Any, Dict, Set
 import logging
 import sys
 import re
-import swingft_cli
 from .ui_utils import supports_color as _supports_color, blue as _blue, yellow as _yellow
 
 # strict-mode helper
@@ -107,19 +106,17 @@ def _append_terminal_log(config: Dict[str, Any], lines: list[str]) -> None:
 
 
 def check_exception_conflicts(config_path: str, config: Dict[str, Any]) -> Set[str]:
+    from swingft_cli.commands.obfuscate_cmd import obf_dir
+    
     env_ast = os.environ.get("SWINGFT_AST_NODE_PATH", "").strip()
     if env_ast and os.path.exists(env_ast):
         ast_file = Path(env_ast)
     else:
-        from commands.obfuscate_cmd import obf_dir
         ast_candidates = [
-            os.path.join(obf_dir, "AST", "output", "ast_node.json"),
-            os.path.join(obf_dir, "AST", "output", "ast_node.json"),
+            os.path.join(obf_dir, "AST", "output", "ast_node.json")
         ]
         ast_file = next((Path(p) for p in ast_candidates if Path(p).exists()), None)
 
-    test_path = os.path.join(obf_dir, "hoho")
-    os.mkdir(test_path)
     if not ast_file:
         # 조용히 스킵 (Stage 1 스킵 시 정상)
         return set()
@@ -244,7 +241,7 @@ def check_exception_conflicts(config_path: str, config: Dict[str, Any]) -> Set[s
         except (EOFError, KeyboardInterrupt):
             print("\n사용자에 의해 취소되었습니다.")
             raise SystemExit(1)
-    
+
     config_names = set()
     for category in ("obfuscation",):
         items = config.get("include", {}).get(category, [])
@@ -275,6 +272,7 @@ def check_exception_conflicts(config_path: str, config: Dict[str, Any]) -> Set[s
         sample_all = sorted(list(conflicts))
         sample = sample_all[:10]
         _preflight_print(f"  - Collision identifiers: {len(conflicts)} items (example: {', '.join(sample)})")
+ 
         try:
             if policy == "force":
                 _update_ast_node_exceptions(
@@ -406,4 +404,3 @@ def check_exception_conflicts(config_path: str, config: Dict[str, Any]) -> Set[s
         _preflight_print("")
 
     return ex_names
-

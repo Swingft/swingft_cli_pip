@@ -377,10 +377,9 @@ def find_ast_entry_from_pipeline(project_root: str, ident: str):
         if env_ast:
             candidates.append(env_ast)
         # common default locations
-        from commands.obfuscate_cmd import obf_dir
+        from swingft_cli.commands.obfuscate_cmd import obf_dir
         candidates.extend([
-            str(_P(obf_dir / "AST" / "output" / "ast_node.json")),
-            str(_P(obf_dir / "AST" / "output" / "ast_node.json")),
+            os.path.join(obf_dir, "AST", "output", "ast_node.json")
         ])
         ast_path = next((p for p in candidates if _P(p).exists()), None)
         if not ast_path:
@@ -401,6 +400,7 @@ def resolve_ast_symbols(project_root: str, swift_path: str | None, ident: str):
     Order: analyzer (if available) -> pipeline ast_node.json minimal entry -> None
     Returns either a dict or list compatible with downstream usage.
     """
+    from swingft_cli.commands.obfuscate_cmd import obf_dir
     try:
         if swift_path:
             res = run_swift_ast_analyzer(swift_path)

@@ -305,7 +305,7 @@ def _apply_analyzer_exclusions_to_ast_and_config(
         # Detect AST path if not provided, then update isException=1 for listed names
         ast_path_eff = ast_file_path
         if not ast_path_eff or not os.path.isfile(ast_path_eff):
-            from ...commands.obfuscate_cmd import obf_dir
+            from swingft_cli.commands.obfuscate_cmd import obf_dir
             candidates = [
                 os.path.join(obf_dir, "AST", "output", "ast_node.json"),
                 os.path.join(obf_dir, "AST", "output", "ast_node.json"),

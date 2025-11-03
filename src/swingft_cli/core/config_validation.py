@@ -166,7 +166,7 @@ def _run_config_validation_and_analysis(working_config_path: str | None, args) -
     # Analyzer 적용
     try:
         pkg_root = os.path.dirname(swingft_cli.__file__)
-        analyzer_root = os.path.join(pkg_root, "externals")
+        analyzer_root = os.path.join(pkg_root, "externals", "obfuscation-analyzer")
         proj_in = args.input
         ast_path = os.environ.get("SWINGFT_AST_NODE_PATH", "")
         from ..core.config.loader import _apply_analyzer_exclusions_to_ast_and_config as _apply_anl

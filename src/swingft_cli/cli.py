@@ -10,6 +10,15 @@ src_dir = os.path.join(project_root, "src")
 if src_dir not in sys.path:
     sys.path.insert(0, src_dir)
 
+# Ensure child Python processes (pipeline scripts) can import swingft_cli when running from source.
+_existing_pythonpath = os.environ.get("PYTHONPATH", "")
+_pythonpath_entries = [p for p in _existing_pythonpath.split(os.pathsep) if p]
+if src_dir not in _pythonpath_entries:
+    if _pythonpath_entries:
+        os.environ["PYTHONPATH"] = os.pathsep.join([src_dir, *_pythonpath_entries])
+    else:
+        os.environ["PYTHONPATH"] = src_dir
+
 import argparse
 import json
 import logging
